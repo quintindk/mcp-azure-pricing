@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  azure-pricing-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: azure-pricing-mcp:latest
+    container_name: azure-pricing-mcp
+    stdin_open: true   # Keep stdin open (required for stdio)
+    tty: true          # Allocate a pseudo-TTY (required for stdio)
+    environment:
+      # MCP Configuration
+      - MCP_TRANSPORT=stdio
+      - MCP_DEBUG=false
+      - LOG_LEVEL=INFO
+      # Azure Pricing API Configuration
+      - AZURE_RETAIL_PRICES_URL=https://prices.azure.com/api/retail/prices
+      - AZURE_API_VERSION=2023-01-01-preview
+    # For stdio MCP servers, we typically don't expose ports
+    # The communication happens via stdin/stdout
+    restart: unless-stopped
