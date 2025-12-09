@@ -79,7 +79,14 @@ class Settings(BaseSettings):
         default='Consumption',
         description='Tipo de precio (ej: Consumption)'
     )
-    
+
+    # Configuración de transporte MCP
+    # Note: With env_prefix='MCP_', this field is set via MCP_TRANSPORT env var
+    TRANSPORT: str = Field(
+        default='stdio',
+        description='Tipo de transporte para MCP (stdio, sse, http)'
+    )
+
     # Configuración del modelo
     model_config = SettingsConfigDict(
         env_file='.env',
@@ -141,7 +148,17 @@ class Settings(BaseSettings):
         if not v:
             return 'Consumption'
         return str(v).strip()
-    
+
+    @field_validator('TRANSPORT')
+    def validate_transport(cls, v):
+        if not v:
+            return 'stdio'
+        v = str(v).strip().lower()
+        valid_transports = {'stdio', 'sse', 'http'}
+        if v not in valid_transports:
+            raise ValueError(f'Invalid transport type: {v}. Must be one of: {", ".join(valid_transports)}')
+        return v
+
     @field_validator('MCP_DEBUG', 'MCP_RELOAD', mode='before')
     def validate_bool(cls, v):
         if isinstance(v, str):
