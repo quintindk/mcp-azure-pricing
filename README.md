@@ -1,29 +1,76 @@
 # Azure Pricing MCP Server
 
+[![Docker Hub](https://img.shields.io/docker/v/quintindk/azure-pricing-mcp?label=docker&logo=docker)](https://hub.docker.com/r/quintindk/azure-pricing-mcp)
+[![Docker Pulls](https://img.shields.io/docker/pulls/quintindk/azure-pricing-mcp)](https://hub.docker.com/r/quintindk/azure-pricing-mcp)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This project provides a Model Context Protocol (MCP) server that allows you to programmatically query Azure resource pricing. The server provides a structured workflow to retrieve pricing information from the Azure Retail Prices API.
+A Model Context Protocol (MCP) server that provides programmatic access to Azure resource pricing information. Query Azure pricing data through a simple, structured workflow using the Azure Retail Prices API.
+
+**Perfect for**: Cost estimation, pricing comparisons, budget planning, and integrating Azure pricing into your AI workflows.
 
 ## Features
 
-- Query Azure pricing data through a simple, structured workflow
-- Get real-time pricing information from the Azure Retail Prices API
-- Navigate through Azure service families, service names, and products
-- Calculate monthly costs for Azure resources
+- 🚀 Query Azure pricing data through a simple, structured workflow
+- 💰 Get real-time pricing information from the Azure Retail Prices API
+- 🔍 Navigate through Azure service families, service names, and products
+- 📊 Calculate monthly costs for Azure resources
+- 🐳 Available as a Docker image for easy deployment
+- 🔓 No Azure account or credentials required (uses public pricing API)
 
-## System Requirements
+## Quick Start with Docker
 
-- Python 3.8 or higher
-- Internet connection to access the Azure Retail Prices API
-- Permission to install Python packages
-- No Azure account or credentials required (uses public pricing API)
+The easiest way to get started is using Docker:
 
-## Installation
+```bash
+# Pull the latest image
+docker pull quintindk/azure-pricing-mcp:latest
+
+# Run with stdio transport (for MCP client integration)
+docker run --rm -e MCP_TRANSPORT=stdio quintindk/azure-pricing-mcp:latest
+
+# Run with HTTP transport (for web-based access)
+docker run --rm -p 8080:8080 -e MCP_TRANSPORT=http quintindk/azure-pricing-mcp:latest
+```
+
+The server will start and be ready to accept MCP requests through your configured client.
+
+## MCP Client Configuration
+
+Configure your MCP client to connect to this server. The configuration depends on the transport mode:
+
+### For HTTP/SSE Transport
+
+Add to your MCP client configuration:
+
+```json
+{
+  "azure-pricing": {
+    "serverUrl": "http://localhost:8080/sse"
+  }
+}
+```
+
+### For stdio Transport (Docker)
+
+Add to your MCP client configuration:
+
+```json
+{
+  "azure-pricing": {
+    "command": "docker",
+    "args": ["run", "--rm", "-i", "-e", "MCP_TRANSPORT=stdio", "quintindk/azure-pricing-mcp:latest"]
+  }
+}
+```
+
+## Alternative: Python Installation
+
+If you prefer to run from source:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/sboludaf/mcp-azure-pricing.git
+   git clone https://github.com/quintindk/mcp-azure-pricing.git
    cd mcp-azure-pricing
    ```
 
@@ -45,7 +92,12 @@ This project provides a Model Context Protocol (MCP) server that allows you to p
    pip install -r requirements.txt
    ```
 
-## Usage
+4. **Run the server:**
+   ```bash
+   python azure_pricing_mcp_server.py
+   ```
+
+## How It Works
 
 The MCP server provides a structured four-step workflow for accessing Azure pricing information:
 
@@ -54,33 +106,14 @@ The MCP server provides a structured four-step workflow for accessing Azure pric
 3. **Get products** - Get products associated with a service
 4. **Calculate monthly costs** - Calculate the monthly cost for a specific product
 
-## Starting the MCP Server
+### Available Endpoints (HTTP Mode)
 
-```bash
-source .venv/bin/activate  # Activate the virtual environment
-python azure_pricing_mcp_server.py
-```
-
-The server will start at `http://0.0.0.0:8080` by default.
-
-### Available Endpoints
+When running in HTTP mode, the server exposes:
 
 - `GET /sse`: Server-Sent Events endpoint for MCP communication
 - `GET /tools`: Lists the available tools in the MCP server
 
-### MCP Client Configuration
-
-To configure an MCP client to connect to this server, add the following to your `mcp_config.json` file:
-
-```json
-"azure-pricing": {
-  "serverUrl": "http://localhost:8080/sse"
-}
-```
-
-This configuration tells the MCP client to connect to the local server on port 8080 using the SSE endpoint. Make sure the URL matches the address and port your server is running on.
-
-## MCP Tools
+## MCP Tools Reference
 
 The server provides four main tools that form a logical workflow for querying Azure pricing:
 
@@ -141,6 +174,24 @@ The MCP server includes a robust error handling system that:
 * The Azure Retail Prices API has rate limits that can affect performance with a high volume of requests
 * Prices may vary depending on the region and currency selected
 * Not all Azure resources are available in all regions
+
+## Building from Source
+
+If you want to build your own Docker image:
+
+```bash
+# Clone the repository
+git clone https://github.com/quintindk/mcp-azure-pricing.git
+cd mcp-azure-pricing
+
+# Build the Docker image
+docker build -t azure-pricing-mcp:local .
+
+# Run your local build
+docker run --rm -p 8080:8080 -e MCP_TRANSPORT=http azure-pricing-mcp:local
+```
+
+The Dockerfile is optimized for both `amd64` and `arm64` architectures and includes multi-stage caching for faster builds.
 
 ## Contributing
 
